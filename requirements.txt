@@ -1,3 +1,4 @@
 streamlit
 hikerapi
+ensembledata
 streamlit-local-storage
