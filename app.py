@@ -86,6 +86,7 @@ def items_to_rows(items, media_type):
             "Дата": str(item.get("taken_at", ""))[:10],
             "Лайки": item.get("like_count", 0),
             "Комментарии": item.get("comment_count", 0),
+            "Просмотры": item.get("view_count") or item.get("play_count") or 0,
             "Описание": get_caption(item).replace("\n", " ")[:200],
             "Shortcode": item.get("code", ""),
         })
