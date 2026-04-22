@@ -46,7 +46,7 @@ def _to_rows(items: list, username: str, content_type: str) -> list:
             "Комментарии": item.get("comment_count", 0),
             "Просмотры": item.get("view_count") or item.get("play_count") or 0,
             "Описание": _get_caption(item).replace("\n", " ")[:200],
-            "ID/Code": item.get("code", item.get("pk", "")),
+            "Ссылка": "",
         })
     return rows
 

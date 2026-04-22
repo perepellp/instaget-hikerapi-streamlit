@@ -6,6 +6,7 @@ from streamlit_local_storage import LocalStorage
 
 import collector_instagram as instagram
 import collector_tiktok as tiktok
+import collector_vk as vk
 
 st.set_page_config(page_title="Social Stats", page_icon="📊", layout="centered")
 
@@ -25,6 +26,8 @@ if "form_loaded" not in st.session_state:
     st.session_state["ig_max_reels"]  = data.get("ig_max_reels", 20)
     st.session_state["tt_token"]      = data.get("tt_token", "")
     st.session_state["tt_usernames"]  = data.get("tt_usernames", "")
+    st.session_state["vk_token"]      = data.get("vk_token", "")
+    st.session_state["vk_usernames"]  = data.get("vk_usernames", "")
     st.session_state["tt_max_videos"] = data.get("tt_max_videos", 20)
     st.session_state["form_loaded"]   = True
 
@@ -67,6 +70,23 @@ with st.form("params"):
     )
     tt_max_videos = st.number_input("🎬 Видео на аккаунт", min_value=1, max_value=100,
                                     value=st.session_state.get("tt_max_videos", 20))
+    
+    st.divider()
+
+    # VK
+    st.subheader("🎵 VK (service key)")
+    vk_token = st.text_input(
+        "🔑 Service Key",
+        value=st.session_state.get("vk_token", ""),
+        type="password",
+    )
+    vk_usernames = st.text_input(
+        "👤 Аккаунты (через запятую)",
+        value=st.session_state.get("vk_usernames", ""),
+        placeholder="...",
+    )
+    vk_max_videos = st.number_input("🎬 Видео на аккаунт", min_value=1, max_value=100,
+                                    value=5)
 
     submitted = st.form_submit_button("🚀 Собрать данные", width="stretch")
 
@@ -95,19 +115,22 @@ if submitted:
         "ig_max_posts": ig_max_posts, "ig_max_reels": ig_max_reels,
         "tt_token": tt_token, "tt_usernames": tt_usernames,
         "tt_max_videos": tt_max_videos,
+        "vk_token": vk_token, "vk_usernames": vk_usernames,
         "results": None,
     })
     local_storage.setItem("form_data", json.dumps({
         "ig_token": ig_token, "ig_usernames": ig_usernames,
         "ig_max_posts": int(ig_max_posts), "ig_max_reels": int(ig_max_reels),
         "tt_token": tt_token, "tt_usernames": tt_usernames,
+        "vk_token": vk_token, "vk_usernames": vk_usernames,
         "tt_max_videos": int(tt_max_videos),
     }))
 
     ig_accounts = parse_usernames(ig_usernames)
     tt_accounts = parse_usernames(tt_usernames)
+    vk_accounts = parse_usernames(vk_usernames)
 
-    if not ig_accounts and not tt_accounts:
+    if not ig_accounts and not tt_accounts and not vk_accounts:
         st.error("Укажите хотя бы один аккаунт.")
         st.stop()
 
@@ -145,8 +168,25 @@ if submitted:
     elif tt_accounts and not tt_token:
         errors.append("⚠️ Указаны TikTok-аккаунты, но не введён EnsembleData токен.")
 
+
+    # ── VK ─────────────────────────────────────────────────────────────
+    if vk_accounts and vk_token:
+        for username in vk_accounts:
+            with st.spinner(f"VK: @{username}…"):
+                rows, err = vk.collect(
+                    token=vk_token,
+                    username=username,
+                    max_posts=int(vk_max_videos),
+                )
+                if err:
+                    errors.append(err)
+                all_rows.extend(rows)
+    elif vk_accounts and not vk_token:
+        errors.append("⚠️ Указаны VK-аккаунты, но не введён токен.")
+
     st.session_state["results"] = all_rows
     st.session_state["errors"]  = errors
+
 
 # ── Вывод результатов ─────────────────────────────────────────────────────────
 if st.session_state.get("results") is not None:

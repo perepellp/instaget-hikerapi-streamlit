@@ -77,7 +77,7 @@ def collect(token, username, max_videos=10):
             "Комментарии": comments,
             "Просмотры": views,
             "Описание": desc,
-            "ID/Code": aweme_id,
+            "Ссылка": "",
         })
 
     return rows, warn
